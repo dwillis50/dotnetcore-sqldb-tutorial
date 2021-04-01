@@ -1,0 +1,30 @@
+﻿1. Update all nuget packages
+2. Package Manager Console: Update-Database
+3. Run the app (F5)
+4. Create Azure resources:
+az login (NOTE: this isn't working in PowerShell or VSCode)
+5. Switched to Cloud Shell
+az group create --name rg-dw-dotnetcore-sql-01 --location eastus
+az sql server create --name sql-dw-dotnetcore-01 --resource-group rg-dw-dotnetcore-sql-01 --location eastus --admin-user dwsqladmin --admin-password 39qho4kPhdpIywEFk8m7
+az sql server firewall-rule create --resource-group rg-dw-dotnetcore-sql-01 --server sql-dw-dotnetcore-01 --name AllowAzureIps --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
+az sql server firewall-rule create --name AllowLocalClient --server sql-dw-dotnetcore-01 --resource-group rg-dw-dotnetcore-sql-01 --start-ip-address=172.26.80.1 --end-ip-address=172.26.80.1
+
+az sql db create --resource-group rg-dw-dotnetcore-sql-01 --server sql-dw-dotnetcore-01 --name coreDB --service-objective S0
+
+az sql db show-connection-string --client ado.net --server sql-dw-dotnetcore-01 --name coreDB
+
+"Server=tcp:sql-dw-dotnetcore-01.database.windows.net,1433;Database=coreDB;User ID=<username>;Password=<password>;Encrypt=true;Connection Timeout=30;"
+
+
+# run the following in PowerShell (cd to the project folder)
+# Delete old migrations (ran this in PowerShell)
+rm -r Migrations
+# Recreate migrations (Package manager console)
+Add-Migration InitialCreate
+
+# Set connection string to production database
+# PowerShell (ran this in PowerShell)
+$env:ConnectionStrings:MyDbConnection="Server=tcp:sql-dw-dotnetcore-01.database.windows.net,1433;Database=coreDB;User ID=<username>;Password=<password>;Encrypt=true;Connection Timeout=30;"
+
+# Run migrations (Package manager console)
+Update-Database
