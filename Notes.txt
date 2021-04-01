@@ -22,9 +22,21 @@ rm -r Migrations
 # Recreate migrations (Package manager console)
 Add-Migration InitialCreate
 
-# Set connection string to production database
-# PowerShell (ran this in PowerShell)
-$env:ConnectionStrings:MyDbConnection="Server=tcp:sql-dw-dotnetcore-01.database.windows.net,1433;Database=coreDB;User ID=<username>;Password=<password>;Encrypt=true;Connection Timeout=30;"
-
 # Run migrations (Package manager console)
 Update-Database
+
+
+--- now get ready to deploy to Azure
+#create a deployment user?
+az webapp deployment user set --user-name dwdeploy1 --password 39qho4kPhdpIywEFk8m7
+az appservice plan create --name plan-dotnetcore-sql --resource-group rg-dw-dotnetcore-sql-01 --sku FREE
+az webapp create --resource-group rg-dw-dotnetcore-sql-01 --plan plan-dotnetcore-sql --name app-dw-dotnetcore-sql --deployment-local-git
+
+az webapp config connection-string set --resource-group rg-dw-dotnetcore-sql-01 --name app-dw-dotnetcore-sql --settings MyDbConnection="Server=tcp:sql-dw-dotnetcore-01.database.windows.net,1433;Database=coreDB;User ID=dwsqladmin;Password=39qho4kPhdpIywEFk8m7;Encrypt=true;Connection Timeout=30;" --connection-string-type SQLAzure
+
+
+
+git remote add azure https://dwdeploy1@app-dw-dotnetcore-sql.scm.azurewebsites.net/app-dw-dotnetcore-sql.git
+
+#from PowerShell
+git push azure master
